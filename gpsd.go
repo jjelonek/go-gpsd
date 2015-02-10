@@ -153,6 +153,9 @@ type ERRORReport struct {
 	Message string `json:"message"`
 }
 
+type AISRAWReport ERRORReport
+type GPSRAWReport ERRORReport
+
 type Satellite struct {
 	PRN  float64 `json:"PRN"`
 	Az   float64 `json:"az"`
@@ -180,7 +183,7 @@ func Dial(address string) (session *Session, err error) {
 //    done := gpsd.Watch()
 //    <- done
 func (s *Session) Watch() (done chan bool) {
-	fmt.Fprintf(s.socket, "?WATCH={\"enable\":true,\"json\":true}")
+	fmt.Fprintf(s.socket, "?WATCH={\"enable\":true,\"json\":true, \"raw\":1")
 	done = make(chan bool)
 
 	go watch(done, s)
@@ -222,11 +225,19 @@ func watch(done chan bool, s *Session) {
 		if line, err := s.reader.ReadString('\n'); err == nil {
 			var reportPeek GPSDReport
 			lineBytes := []byte(line)
+			if string(lineBytes[0:2]) == "!A" {
+				fmt.Printf("Got row AIS data: %q", lineBytes)
+				lineBytes = []byte(fmt.Sprintf("{\"class\":\"AIS_ROW\", \"message\":\"%s\"}", lineBytes))
+			} else {
+				if string(lineBytes[0:2]) == "$G" {
+					fmt.Printf("Got row GPS data: %q", lineBytes)
+					lineBytes = []byte(fmt.Sprintf("{\"class\":\"GPS_ROW\", \"message\":\"%s\"}", lineBytes))
+				}
+			}
 			if err = json.Unmarshal(lineBytes, &reportPeek); err == nil {
 				if len(s.filters[reportPeek.Class]) == 0 {
 					continue
 				}
-
 				if report, err := unmarshalReport(reportPeek.Class, lineBytes); err == nil {
 					s.deliverReport(reportPeek.Class, report)
 				} else {
@@ -235,6 +246,7 @@ func watch(done chan bool, s *Session) {
 			} else {
 				fmt.Println("JSON parsing error:", err)
 			}
+
 		} else {
 			fmt.Println("Stream reader error:", err)
 		}
@@ -273,11 +285,18 @@ func unmarshalReport(class string, bytes []byte) (interface{}, error) {
 		var r *PPSReport
 		err = json.Unmarshal(bytes, &r)
 		return r, err
+	case "AISRAW":
+		var r *AISRAWReport
+		err = json.Unmarshal(bytes, &r)
+		return r, err
+	case "GPSRAW":
+		var r *GPSRAWReport
+		err = json.Unmarshal(bytes, &r)
+		return r, err
 	case "ERROR":
 		var r *ERRORReport
 		err = json.Unmarshal(bytes, &r)
 		return r, err
 	}
-
 	return nil, err
 }
