@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 )
 
@@ -227,11 +228,11 @@ func watch(done chan bool, s *Session) {
 			lineBytes := []byte(line)
 			if string(lineBytes[0:2]) == "!A" {
 				fmt.Printf("Got row AIS data: %q", lineBytes)
-				lineBytes = []byte(fmt.Sprintf("{\"class\":\"AIS_ROW\", \"message\":\"%s\"}", lineBytes))
+				lineBytes = []byte(fmt.Sprintf("{\"class\":\"AIS_ROW\", \"message\":\"%s\"}", strings.Trim(string(lineBytes), "\n\r")))
 			} else {
 				if string(lineBytes[0:2]) == "$G" {
 					fmt.Printf("Got row GPS data: %q", lineBytes)
-					lineBytes = []byte(fmt.Sprintf("{\"class\":\"GPS_ROW\", \"message\":\"%s\"}", lineBytes))
+					lineBytes = []byte(fmt.Sprintf("{\"class\":\"GPS_ROW\", \"message\":\"%s\"}", strings.Trim(string(lineBytes), "\n\r")))
 				}
 			}
 			if err = json.Unmarshal(lineBytes, &reportPeek); err == nil {
