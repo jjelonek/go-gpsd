@@ -183,7 +183,7 @@ func Dial(address string) (session *Session, err error) {
 //    done := gpsd.Watch()
 //    <- done
 func (s *Session) Watch() (done chan bool) {
-	fmt.Fprintf(s.socket, "?WATCH={\"enable\":true,\"json\":true, \"raw\":1")
+	fmt.Fprintf(s.socket, "?WATCH={\"enable\":true,\"json\":true, \"raw\":1}")
 	done = make(chan bool)
 
 	go watch(done, s)
