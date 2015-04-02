@@ -227,11 +227,9 @@ func watch(done chan bool, s *Session) {
 			var reportPeek GPSDReport
 			lineBytes := []byte(line)
 			if string(lineBytes[0:2]) == "!A" {
-				fmt.Printf("Got row AIS data: %q\n", lineBytes)
 				lineBytes = []byte(fmt.Sprintf("{\"class\":\"AIS_ROW\", \"message\":\"%s\"}", strings.Trim(string(lineBytes), "\n\r")))
 			} else {
 				if string(lineBytes[0:2]) == "$G" {
-					fmt.Printf("Got row GPS data: %q\n", lineBytes)
 					lineBytes = []byte(fmt.Sprintf("{\"class\":\"GPS_ROW\", \"message\":\"%s\"}", strings.Trim(string(lineBytes), "\n\r")))
 				}
 			}
