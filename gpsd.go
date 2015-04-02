@@ -218,8 +218,6 @@ func (s *Session) deliverReport(class string, report interface{}) {
 }
 
 func watch(done chan bool, s *Session) {
-	fmt.Println("WATCHING")
-
 	// We're not using a JSON decoder because we first need to inspect
 	// the JSON string to determine it's "class"
 	for {
